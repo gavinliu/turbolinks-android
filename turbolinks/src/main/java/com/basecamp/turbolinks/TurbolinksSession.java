@@ -235,7 +235,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
         Context webViewContext = webView.getContext();
         if (webViewContext instanceof MutableContextWrapper) {
-            ((MutableContextWrapper) webViewContext).setBaseContext(this.activity);
+            ((MutableContextWrapper) webViewContext).setBaseContext(this.activity.getApplication());
         }
 
         return this;
