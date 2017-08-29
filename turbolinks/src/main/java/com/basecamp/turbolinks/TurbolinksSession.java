@@ -20,6 +20,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -65,6 +67,24 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
     final Context applicationContext;
     final WebView webView;
+
+    private WebViewClientWrapper mWebViewClientWrapper;
+
+    public static class WebViewClientWrapper {
+
+        public boolean shouldOverrideUrlLoading(String location) {
+            return false;
+        }
+
+        public boolean shouldInterceptRequest(String location) {
+            return false;
+        }
+    }
+
+    public TurbolinksSession webViewClientWrapper(WebViewClientWrapper webViewClientWrapper) {
+        mWebViewClientWrapper = webViewClientWrapper;
+        return this;
+    }
 
     // ---------------------------------------------------
     // Constructor
@@ -124,6 +144,10 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
                     return false;
                 }
 
+                if (mWebViewClientWrapper != null && mWebViewClientWrapper.shouldOverrideUrlLoading(location)) {
+                    return true;
+                }
+
                 /**
                  * Prevents firing twice in a row within a few milliseconds of each other, which
                  * happens. So we check for a slight delay between requests, which is plenty of time
@@ -137,6 +161,41 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
                 }
 
                 return true;
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                String url = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    url = request.getUrl().toString();
+                }
+
+                if (mWebViewClientWrapper != null && mWebViewClientWrapper.shouldInterceptRequest(url)) {
+                    InputStream localCopy = null;
+                    try {
+                        localCopy = activity.getAssets().open("js/turbolinks_bridge.js");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return new WebResourceResponse("application/x-javascript", "UTF-8", localCopy);
+                } else {
+                    return super.shouldInterceptRequest(view, request);
+                }
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+                if (mWebViewClientWrapper != null && mWebViewClientWrapper.shouldInterceptRequest(url)) {
+                    InputStream localCopy = null;
+                    try {
+                        localCopy = activity.getAssets().open("js/turbolinks_bridge.js");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return new WebResourceResponse("application/x-javascript", "UTF-8", localCopy);
+                } else {
+                    return super.shouldInterceptRequest(view, url);
+                }
             }
 
             @Override
