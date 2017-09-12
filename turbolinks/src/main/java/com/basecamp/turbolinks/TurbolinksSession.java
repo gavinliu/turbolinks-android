@@ -105,7 +105,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
         this.pullToRefreshEnabled = true;
         this.webViewAttachedToNewParent = false;
 
-        this.webView = TurbolinksHelper.createWebView(applicationContext);
+        this.webView = TurbolinksHelper.createWebView(context);
         this.webView.addJavascriptInterface(this, JAVASCRIPT_INTERFACE_NAME);
         this.webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -294,7 +294,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
         Context webViewContext = webView.getContext();
         if (webViewContext instanceof MutableContextWrapper) {
-            ((MutableContextWrapper) webViewContext).setBaseContext(this.activity.getApplication());
+            ((MutableContextWrapper) webViewContext).setBaseContext(this.activity);
         }
 
         return this;
