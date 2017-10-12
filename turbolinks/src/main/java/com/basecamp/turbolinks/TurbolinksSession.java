@@ -14,6 +14,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -22,6 +23,7 @@ import android.webkit.WebViewClient;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>The main concrete class to use Turbolinks 5 in your app.</p>
@@ -45,6 +47,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
     HashMap<String, Object> javascriptInterfaces = new HashMap<>();
     HashMap<String, String> restorationIdentifierMap = new HashMap<>();
     String location;
+    Map<String, String> header;
     String currentVisitIdentifier;
     TurbolinksAdapter turbolinksAdapter;
     TurbolinksView turbolinksView;
@@ -85,7 +88,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
         this.pullToRefreshEnabled = true;
         this.webViewAttachedToNewParent = false;
 
-        this.webView = TurbolinksHelper.createWebView(applicationContext);
+        this.webView = TurbolinksHelper.createWebView(context);
         this.webView.addJavascriptInterface(this, JAVASCRIPT_INTERFACE_NAME);
         this.webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -272,10 +275,11 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
      *
      * @param location The URL to visit.
      */
-    public void visit(String location) {
+    public void visit(String location, Map<String, String> additionalHttpHeaders) {
         TurbolinksLog.d("visit called");
 
         this.location = location;
+        this.header = additionalHttpHeaders;
 
         validateRequiredParams();
 
@@ -289,7 +293,11 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
         if (!turbolinksIsReady && !coldBootInProgress) {
             TurbolinksLog.d("Cold booting: " + location);
-            webView.loadUrl(location);
+            if (additionalHttpHeaders != null) {
+                webView.loadUrl(location, additionalHttpHeaders);
+            } else {
+                webView.loadUrl(location);
+            }
         }
 
         // Reset so that cached snapshot is not the default for the next visit
@@ -501,7 +509,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
             public void run() { // route through normal chain so progress view is shown, regular logging, etc.
                 turbolinksAdapter.pageInvalidated();
 
-                visit(location);
+                visit(location, header);
             }
         });
     }
