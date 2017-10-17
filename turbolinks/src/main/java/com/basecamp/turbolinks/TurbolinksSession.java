@@ -14,7 +14,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.CookieManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -68,6 +67,21 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
     final Context applicationContext;
     final WebView webView;
+
+    //--------
+    // custom
+    //--------
+
+    HookSwipeRefreshListener mHookSwipeRefreshListener;
+
+    public interface HookSwipeRefreshListener {
+         boolean onRefresh();
+    }
+
+    public TurbolinksSession setHookSwipeRefreshListener(HookSwipeRefreshListener hookSwipeRefreshListener) {
+        mHookSwipeRefreshListener = hookSwipeRefreshListener;
+        return this;
+    }
 
     // ---------------------------------------------------
     // Constructor
@@ -261,7 +275,9 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
         this.turbolinksView.getRefreshLayout().setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                visitLocationWithAction(location, ACTION_ADVANCE);
+                if (mHookSwipeRefreshListener == null || !mHookSwipeRefreshListener.onRefresh()) {
+                    visitLocationWithAction(location, ACTION_ADVANCE);
+                }
             }
         });
         this.webViewAttachedToNewParent = this.turbolinksView.attachWebView(webView, screenshotsEnabled, pullToRefreshEnabled);
@@ -787,7 +803,7 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
 
     /**
      * <p>Ensures all required chained calls/parameters ({@link #activity}, {@link #turbolinksView},
-     * and location}) are set before calling {@link #visit(String)}.</p>
+     * and location}) are set before calling {@link #visit(String, Map)}.</p>
      */
     private void validateRequiredParams() {
         if (activity == null) {
