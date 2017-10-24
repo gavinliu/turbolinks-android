@@ -285,6 +285,10 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
         return this;
     }
 
+    public void visit(String location) {
+        visit(location, null);
+    }
+
     /**
      * <p><b>REQUIRED</b> Executes a Turbolinks visit. Must be called at the end of the chain --
      * all required parameters will first be validated before firing.</p>
