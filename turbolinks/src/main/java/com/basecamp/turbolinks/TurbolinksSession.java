@@ -138,6 +138,8 @@ public class TurbolinksSession implements TurbolinksScrollUpCallback {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String location) {
                 if (!turbolinksIsReady || coldBootInProgress) {
+                    // Hack Redirect URl
+                    TurbolinksSession.this.location = location;
                     return false;
                 }
 
